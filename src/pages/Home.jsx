@@ -1,4 +1,11 @@
-import { AdCard, Scroll, Navbar, Footer, Hero, TopCategories } from "../components";
+import {
+  AdCard,
+  Scroll,
+  Navbar,
+  Footer,
+  Hero,
+  TopCategories,
+} from "../components";
 import { useEffect, useState } from "react";
 import "@fontsource-variable/lexend";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -17,61 +24,51 @@ function Home() {
     async function fetchProducts() {
       try {
         setLoading(true);
+        setError(null);
+
         const params = new URLSearchParams(location.search);
         const category = params.get("category");
-        
-        let url = "https://dummyjson.com/products?limit=100";
+
+        const STRAPI_URL = "http://localhost:1337";
+
+        let url = `${STRAPI_URL}/api/products?populate=*`;
+
+        // If category filter exists
         if (category) {
-          url = `https://dummyjson.com/products/category/${encodeURIComponent(category)}`;
+          url = `${STRAPI_URL}/api/products?filters[category][slug][$eq]=${category}&populate=*`;
         }
-        
+
         const response = await fetch(url);
+
         if (!response.ok) {
-          // If category fetch fails, fallback to all products
-          if (category) {
-            const fallbackResponse = await fetch("https://dummyjson.com/products?limit=100");
-            if (!fallbackResponse.ok) throw new Error("Network response was not ok");
-            const fallbackData = await fallbackResponse.json();
-            const formattedProducts = fallbackData.products
-              .filter(p => p.category?.toLowerCase().includes(category.toLowerCase()))
-              .map((product) => ({
-                id: product.id,
-                image: product.images[0],
-                title: product.title,
-                description: product.description,
-                price: product.price,
-                category: product.category,
-                badge: `$${product.price}`,
-                buttonText: "View Details",
-                productId: product.id,
-              }));
-            setAllProducts(formattedProducts);
-            setProducts(formattedProducts);
-            return;
-          }
-          throw new Error("Network response was not ok");
+          throw new Error("Failed to fetch products");
         }
-        
+
         const data = await response.json();
-        const formattedProducts = data.products.map((product) => ({
-          id: product.id,
-          image: product.images[0],
-          title: product.title,
-          description: product.description,
-          price: product.price,
-          category: product.category,
-          badge: `$${product.price}`,
+
+        const formattedProducts = data.data.map((item) => ({
+          id: item.id,
+          image: item.image?.data
+            ? `${STRAPI_URL}${item.image.data.url}`
+            : "",
+          title: item.title,
+          description: item.description,
+          price: item.price,
+          category: item.category?.data?.attributes?.name || "",
+          badge: `$ ${item.price}`,
           buttonText: "View Details",
-          productId: product.id,
+          productId: item.documentId,
         }));
+
         setAllProducts(formattedProducts);
         setProducts(formattedProducts);
-      } catch (error) {
-        setError(error.message);
+      } catch (err) {
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     }
+
     fetchProducts();
   }, [location.search]);
 
@@ -79,18 +76,20 @@ function Home() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const searchQuery = params.get("q")?.toLowerCase().trim() || "";
-    
+
     let filtered = [...allProducts];
-    
+
     // Apply search filter
     if (searchQuery) {
       filtered = filtered.filter((product) => {
         const titleMatch = product.title.toLowerCase().includes(searchQuery);
-        const descMatch = product.description.toLowerCase().includes(searchQuery);
+        const descMatch = product.description
+          .toLowerCase()
+          .includes(searchQuery);
         return titleMatch || descMatch;
       });
     }
-    
+
     // Apply price range filter
     if (priceRange.min || priceRange.max) {
       filtered = filtered.filter((product) => {
@@ -100,7 +99,7 @@ function Home() {
         return price >= min && price <= max;
       });
     }
-    
+
     // Apply sorting
     if (sortBy === "price-low") {
       filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
@@ -109,7 +108,7 @@ function Home() {
     } else if (sortBy === "name") {
       filtered.sort((a, b) => a.title.localeCompare(b.title));
     }
-    
+
     setProducts(filtered);
   }, [location.search, allProducts, sortBy, priceRange]);
 
@@ -119,7 +118,7 @@ function Home() {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center h-screen bg-[#F9FAFB] font-[Lexend]">
+      <div className="flex products-center justify-center h-screen bg-[#F9FAFB] font-[Lexend]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-t-transparent border-[#177529] rounded-full animate-spin mx-auto"></div>
           <p className="mt-4 text-[#177529] font-medium">Loading products...</p>
@@ -129,7 +128,7 @@ function Home() {
 
   if (error)
     return (
-      <div className="flex items-center justify-center h-screen bg-[#F9FAFB] font-[Lexend]">
+      <div className="flex products-center justify-center h-screen bg-[#F9FAFB] font-[Lexend]">
         <div className="text-center text-[#177529]">
           <p className="text-lg font-semibold mb-2">⚠️ Error</p>
           <p>{error}</p>
@@ -156,13 +155,13 @@ function Home() {
         {!hasSearchOrFilter && <TopCategories />}
         <main className="font-[Lexend] bg-white py-8 px-4 md:px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex products-center justify-between mb-6">
               <h1 className="text-xl md:text-2xl font-semibold text-[#0C0D19]">
-                {searchQuery 
+                {searchQuery
                   ? `Search Results for "${searchQuery}"`
                   : categoryFilter
-                  ? `Products in ${categoryFilter.replace(/-/g, " ")}`
-                  : "Browse Latest Listings"}
+                    ? `Products in ${categoryFilter.replace(/-/g, " ")}`
+                    : "Browse Latest Listings"}
               </h1>
               {hasSearchOrFilter && (
                 <button
@@ -213,23 +212,28 @@ function Home() {
                         type="number"
                         placeholder="Min"
                         value={priceRange.min}
-                        onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
+                        onChange={(e) =>
+                          setPriceRange({ ...priceRange, min: e.target.value })
+                        }
                         className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#177529] bg-white text-[#0C0D19] font-[Lexend]"
                       />
                       <input
                         type="number"
                         placeholder="Max"
                         value={priceRange.max}
-                        onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
+                        onChange={(e) =>
+                          setPriceRange({ ...priceRange, max: e.target.value })
+                        }
                         className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#177529] bg-white text-[#0C0D19] font-[Lexend]"
                       />
                     </div>
                   </div>
 
                   {/* Results Count */}
-                  <div className="flex items-end">
+                  <div className="flex products-end">
                     <p className="text-sm text-gray-600">
-                      {products.length} {products.length === 1 ? "product" : "products"} found
+                      {products.length}{" "}
+                      {products.length === 1 ? "product" : "products"} found
                     </p>
                   </div>
                 </div>
@@ -243,17 +247,21 @@ function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                 {products.map((product) => (
                   <AdCard
-                    key={product.id}
+                    key={product.productId}
                     {...product}
-                    onButtonClick={() => handleViewDetails(product.id)}
+                    onButtonClick={() => handleViewDetails(product.productId)}
                   />
                 ))}
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-[#6B7280] text-lg mb-2">No products found.</p>
+                <p className="text-[#6B7280] text-lg mb-2">
+                  No products found.
+                </p>
                 {new URLSearchParams(location.search).get("q") && (
-                  <p className="text-[#6B7280] text-sm">Try a different search term.</p>
+                  <p className="text-[#6B7280] text-sm">
+                    Try a different search term.
+                  </p>
                 )}
               </div>
             )}

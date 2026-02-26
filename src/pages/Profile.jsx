@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import { FaEdit, FaSignOutAlt } from "react-icons/fa";
+import { Navbar } from "../components"
 
 function Profile() {
-  const { user } = useUser();        // Clerk authenticated user
-  const { signOut } = useAuth();     // Logout function
+  const { user } = useUser();       
+  const { signOut } = useAuth();     
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("ads");
 
@@ -36,7 +37,8 @@ function Profile() {
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] flex justify-center py-12 px-4 font-[Lexend]">
-      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-lg p-8">
+      <Navbar/>
+      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-lg p-8 mt-20">
         {/* Header */}
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-12">
           <div className="relative">

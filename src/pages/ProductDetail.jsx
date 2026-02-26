@@ -1,9 +1,7 @@
-// pages/ProductDetail.jsx
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Navbar, Footer, AdCard } from "../components";
 import "@fontsource-variable/lexend";
-import { getImageUrl } from "../utils/imageUtils";
 
 function ProductDetail() {
   const { id } = useParams();
@@ -25,8 +23,9 @@ function ProductDetail() {
     "Lumumba Hall",
   ];
 
-  const STRAPI_URL = "http://localhost:1337";
+  const STRAPI_URL = "https://campuskatale-fwih.onrender.com";
 
+  // FETCH SINGLE PRODUCT
   useEffect(() => {
     async function fetchProduct() {
       try {
@@ -49,9 +48,9 @@ function ProductDetail() {
           title: item.title,
           description: item.description,
           price: item.price,
-          image: item.image?.data ? `${STRAPI_URL}${item.image.data.url}` : "",
-          categorySlug: item.category?.data?.slug || "",
-          categoryName: item.category?.data?.name || "",
+          image: item.image?.url || "",
+          categorySlug: item.category?.slug || "",
+          categoryName: item.category?.name || "",
         };
 
         setProduct(formattedProduct);
@@ -65,6 +64,7 @@ function ProductDetail() {
     fetchProduct();
   }, [id]);
 
+  // FETCH RELATED PRODUCTS
   useEffect(() => {
     async function fetchRelatedProducts() {
       if (!product?.categorySlug) return;
@@ -82,12 +82,10 @@ function ProductDetail() {
 
         const formatted = data.data.map((item) => ({
           id: item.id,
-          title: item.attributes.title,
-          description: item.attributes.description,
-          price: item.attributes.price,
-          image: item.attributes.image?.data
-            ? `${STRAPI_URL}${item.attributes.image.data.attributes.url}`
-            : "",
+          title: item.title,
+          description: item.description,
+          price: item.price,
+          image: item.image?.url || "",
         }));
 
         setRelatedProducts(formatted.slice(0, 4));
@@ -129,16 +127,24 @@ function ProductDetail() {
       </div>
     );
 
+  const USD_TO_UGX = 3700;
+
+
+const convertedPrice = product.price
+  ? Math.round(product.price * USD_TO_UGX)
+  : 0;
+
   if (!product) return null;
 
-  const productImages = product.images || [product.thumbnail || ""];
+  const productImages = product.image ? [product.image] : [];
   const productLocation = locations[parseInt(id) % locations.length];
-  const productPrice = `UGX. ${(product.price * 3700).toLocaleString()}/=`;
-  const hasDiscount = parseInt(id) % 3 === 0; // Show discount on every 3rd product
+  const productPrice = `UGX ${convertedPrice.toLocaleString()}`;
+  const hasDiscount = parseInt(id) % 3 === 0;
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
+
       <main className="font-[Lexend] bg-white flex-grow pt-28 px-6 md:px-10 pb-10">
         <div className="max-w-7xl mx-auto">
           <button
@@ -149,18 +155,15 @@ function ProductDetail() {
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Side - Main Product Image */}
+            {/* LEFT SIDE */}
             <div className="space-y-4">
-              {/* Large Main Image */}
               <div className="relative bg-gray-100 rounded-2xl overflow-hidden border-2 border-[#177529]">
                 <img
-                  src={getImageUrl(
-                    productImages[selectedImage] || productImages[0],
-                  )}
+                  src={productImages[selectedImage] || ""}
                   alt={product.title}
                   className="w-full h-[350px] object-cover"
                 />
-                {/* Discount Badge - Top Right */}
+
                 {hasDiscount && (
                   <div className="absolute top-3 right-3 bg-[#177529] text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">
                     20% OFF
@@ -168,36 +171,25 @@ function ProductDetail() {
                 )}
               </div>
 
-              {/* Thumbnail Images */}
               <div className="flex gap-4">
                 {productImages.slice(0, 2).map((image, index) => (
                   <div
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`relative bg-gray-100 rounded-2xl overflow-hidden border-2 cursor-pointer transition-all ${
-                      selectedImage === index
-                        ? "border-[#177529]"
-                        : "border-[#177529]"
-                    }`}
+                    className="relative bg-gray-100 rounded-2xl overflow-hidden border-2 cursor-pointer border-[#177529]"
                   >
                     <img
-                      src={getImageUrl(image)}
+                      src={image}
                       alt={`${product.title} ${index + 1}`}
                       className="w-full h-32 object-cover"
                     />
-                    {hasDiscount && (
-                      <div className="absolute top-2 right-2 bg-[#177529] text-white text-xs font-semibold px-2 py-1 rounded-lg">
-                        20% OFF
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right Side - Product Information */}
+            {/* RIGHT SIDE */}
             <div className="flex flex-col justify-start space-y-6">
-              {/* Price */}
               <div>
                 <p className="text-[#177529] font-bold text-3xl mb-1">
                   {productPrice}
@@ -205,44 +197,41 @@ function ProductDetail() {
                 <p className="text-gray-500 text-sm">Per Serving</p>
               </div>
 
-              {/* Product Name */}
               <h1 className="text-[#0C0D19] font-bold text-2xl">
                 {product.title}
               </h1>
 
-              {/* Location */}
               <p className="text-gray-500 text-base">{productLocation}</p>
 
-              {/* Product Description */}
               {product.description && (
                 <p className="text-[#0C0D19] text-base leading-relaxed">
                   {product.description}
                 </p>
               )}
 
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <button className="bg-[#177529] text-white font-medium px-6 py-3 rounded-lg hover:bg-[#135c21] transition-colors">
                   Show Contact
                 </button>
+
                 <button className="bg-white text-[#177529] font-medium px-6 py-3 rounded-lg border-2 border-[#177529] hover:bg-[#f0f9f4] transition-colors">
                   Start Chat
                 </button>
               </div>
 
-              {/* Disclaimer */}
               <p className="text-gray-500 text-sm pt-4 border-t border-gray-200">
                 Disclaimer: Do not PAY in advance. Meet with the seller first.
               </p>
             </div>
           </div>
 
-          {/* Related Products Section */}
+          {/* RELATED PRODUCTS */}
           {relatedProducts.length > 0 && (
             <div className="mt-16 pt-8 border-t border-gray-200">
               <h2 className="text-2xl font-bold text-[#0C0D19] mb-6">
-                More from {product.category}
+                More from {product.categoryName}
               </h2>
+
               {loadingRelated ? (
                 <div className="flex justify-center py-8">
                   <div className="w-8 h-8 border-4 border-t-transparent border-[#177529] rounded-full animate-spin"></div>
@@ -253,12 +242,10 @@ function ProductDetail() {
                     <AdCard
                       key={relatedProduct.id}
                       id={relatedProduct.id}
-                      image={
-                        relatedProduct.images?.[0] || relatedProduct.thumbnail
-                      }
+                      image={relatedProduct.image}
                       title={relatedProduct.title}
                       description={relatedProduct.description}
-                      badge={`$${relatedProduct.price}`}
+                      badge={`UGX ${relatedProduct.price}`}
                       buttonText="View Details"
                       onButtonClick={() =>
                         navigate(`/product/${relatedProduct.id}`)
@@ -271,6 +258,7 @@ function ProductDetail() {
           )}
         </div>
       </main>
+
       <Footer />
     </div>
   );

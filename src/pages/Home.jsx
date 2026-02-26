@@ -29,7 +29,7 @@ function Home() {
         const params = new URLSearchParams(location.search);
         const category = params.get("category");
 
-        const STRAPI_URL = "http://localhost:1337";
+        const STRAPI_URL = "https://campuskatale-fwih.onrender.com";
 
         let url = `${STRAPI_URL}/api/products?populate=*`;
 
@@ -48,9 +48,7 @@ function Home() {
 
         const formattedProducts = data.data.map((item) => ({
           id: item.id,
-          image: item.image?.data
-            ? `${STRAPI_URL}${item.image.data.url}`
-            : "",
+          image: item.image?.url || "",
           title: item.title,
           description: item.description,
           price: item.price,

@@ -128,9 +128,9 @@ function AddListing() {
               multiple
               onChange={handleImageChange}
               className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
-                         file:rounded-lg file:border-0 file:text-sm file:font-semibold 
-                         file:bg-[#177529] file:text-white hover:file:bg-[#97C040]
-                         cursor-pointer"
+                        file:rounded-lg file:border-0 file:text-sm file:font-semibold 
+                        file:bg-[#177529] file:text-white hover:file:bg-[#97C040]
+                        cursor-pointer"
             />
             {/* Image Preview */}
             {formData.images.length > 0 && (

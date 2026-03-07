@@ -72,9 +72,8 @@ function ProductDetail() {
       setLoadingRelated(true);
 
       try {
-        const response = await fetch(
-          `${STRAPI_URL}/api/products?filters[category][slug][$eq]=${product.categorySlug}&filters[id][$ne]=${id}&populate=*`,
-        );
+        const url = `${STRAPI_URL}/api/products?filters[category][slug][$eq]=${product.categorySlug}&filters[slug][$ne]=${product.slug}&populate=*`;
+        const response = await fetch(url);
 
         if (!response.ok) throw new Error("Failed to fetch related");
 
@@ -245,7 +244,7 @@ const convertedPrice = product.price
                       image={relatedProduct.image}
                       title={relatedProduct.title}
                       description={relatedProduct.description}
-                      badge={`UGX ${relatedProduct.price}`}
+                      badge={`$ ${relatedProduct.price}`}
                       buttonText="View Details"
                       onButtonClick={() =>
                         navigate(`/product/${relatedProduct.id}`)

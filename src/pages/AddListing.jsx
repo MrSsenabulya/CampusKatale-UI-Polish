@@ -3,11 +3,19 @@ import { Navbar } from "../components";
 import { useNavigate } from "react-router-dom";
 import "@fontsource-variable/lexend";
 
+const STRAPI_URL = "https://campuskatale-fwih.onrender.com";
+
+const generateSlug = (title) =>
+  title
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/\s+/g, "-");
+
 function AddListing() {
-    const navigate = useNavigate();
-    const goHome = () => {
-        navigate("/");
-    }
+  const navigate = useNavigate();
+  const goHome = () => {
+    navigate("/");
+  };
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -29,15 +37,58 @@ function AddListing() {
     setFormData({ ...formData, images: files });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Listing submitted:", formData);
-    // TODO: handle upload or API call here
+
+    try {
+      let uploadedImageId = null;
+
+      if (formData.images.length > 0) {
+        const imageData = new FormData();
+        imageData.append("files", formData.images[0]);
+
+        const uploadRes = await fetch(`${STRAPI_URL}/api/upload`, {
+          method: "POST",
+          body: imageData,
+        });
+
+        const uploadResult = await uploadRes.json();
+        uploadedImageId = uploadResult[0]?.id;
+      }
+
+      // 2️⃣ Create Product
+      const productPayload = {
+        data: {
+          title: formData.title,
+          description: formData.description,
+          price: parseFloat(formData.price),
+          slug: generateSlug(formData.title),
+          image: uploadedImageId,
+          category: formData.category, // must be category ID
+        },
+      };
+
+      const productRes = await fetch(`${STRAPI_URL}/api/products`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(productPayload),
+      });
+
+      if (!productRes.ok) throw new Error("Failed to create listing");
+
+      alert("Listing created successfully!");
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong.");
+    }
   };
 
   return (
     <div className="min-h-screen bg-white text-[#0C0D19] font-[Lexend] p-6">
-        <Navbar />
+      <Navbar />
       <div className="max-w-3xl mx-auto bg-[#F8F8F8] p-8 rounded-2xl shadow-lg mt-20">
         <h1 className="text-2xl md:text-3xl font-semibold text-[#177529] mb-6">
           Add New Listing
@@ -76,7 +127,7 @@ function AddListing() {
             ></textarea>
           </div>
 
-          {/* Price with UGX Prefix */}
+          {/* Price */}
           <div>
             <label className="block text-[#0C0D19] font-semibold mb-2">
               Price
@@ -110,10 +161,13 @@ function AddListing() {
               required
             >
               <option value="">Select category</option>
-              <option value="books">Books</option>
-              <option value="electronics">Electronics</option>
-              <option value="clothing">Clothing</option>
-              <option value="other">Other</option>
+              <option value="1">Groceries</option>
+              <option value="3">Skincare</option>
+              <option value="5">Smartphones</option>
+              <option value="7">Furniture</option>
+              <option value="9">Laptops</option>
+              <option value="11">Home & Kitchen</option>
+              <option value="13">Jewellery</option>
             </select>
           </div>
 

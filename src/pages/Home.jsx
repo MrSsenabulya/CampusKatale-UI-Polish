@@ -33,7 +33,6 @@ function Home() {
 
         let url = `${STRAPI_URL}/api/products?populate=*`;
 
-        // If category filter exists
         if (category) {
           url = `${STRAPI_URL}/api/products?filters[category][slug][$eq]=${category}&populate=*`;
         }

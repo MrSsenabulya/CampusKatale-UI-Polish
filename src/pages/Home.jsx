@@ -115,10 +115,12 @@ function Home() {
 
   if (loading)
     return (
-      <div className="flex products-center justify-center h-screen bg-[#F9FAFB] font-[Lexend]">
+      <div className="flex items-center justify-center h-screen bg-[#F9FAFB] font-[Lexend]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-t-transparent border-[#177529] rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-[#177529] font-medium">Loading products...</p>
+          <p className="mt-4 text-[#177529] font-medium">
+            Loading product details...
+          </p>
         </div>
       </div>
     );

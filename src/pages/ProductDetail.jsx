@@ -24,7 +24,7 @@ function ProductDetail() {
   ];
 
   const STRAPI_URL = "https://campuskatale-fwih.onrender.com";
-
+  // const STRAPI_URL = "http://localhost:1337"; 
   // FETCH SINGLE PRODUCT
   useEffect(() => {
     async function fetchProduct() {

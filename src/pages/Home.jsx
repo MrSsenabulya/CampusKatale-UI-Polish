@@ -30,6 +30,7 @@ function Home() {
         const category = params.get("category");
 
         const STRAPI_URL = "https://campuskatale-fwih.onrender.com";
+        // const STRAPI_URL = "http://localhost:1337";
 
         let url = `${STRAPI_URL}/api/products?populate=*`;
 
